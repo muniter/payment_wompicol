@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="payment_acquirer_form_inherit_payment_wompicol" model="ir.ui.view">
+        <field name="name">payment.acquirer.form.inherit.payment.wompicol</field>
+        <field name="model">payment.acquirer</field>
+        <field name="inherit_id" ref="payment.acquirer_form"/>
+        <field name="arch" type="xml">
+            <xpath expr='//group[@name="acquirer"]' position='inside'>
+                <group attrs="{'invisible': [('provider', '!=', 'wompicol')]}">
+                    <field name="wompicol_public_key"/>
+                    <field name="wompicol_private_key"/>
+                    <field name="wompicol_test_public_key"/>
+                    <field name="wompicol_test_private_key"/>
+                    <field name="wompicol_event_url"/>
+                    <field name="wompicol_test_event_url"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>

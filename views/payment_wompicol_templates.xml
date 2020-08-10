@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="wompicol_form">
+        <div>
+            <!-- this url is probably comming from "values" and wompicol_get_form_action_url, check if it's correct -->
+            <input type="hidden" name="data_set" t-att-data-action-url="tx_url" data-remove-me=""/>
+            <input type="hidden" name="public-key" t-att-value='publickey'/>
+            <input type="hidden" name="currency" t-att-value='currency'/>
+            <input type="hidden" name="amount-in-cents" t-att-value='amountcents'/>
+            <input type="hidden" name="reference" t-att-value='reference'/>
+            <input type="hidden" name="redirect-url" t-att-value='redirectUrl'/>
+        </div>
+    </template>
+</odoo>
