@@ -73,13 +73,20 @@ class PaymentAcquirerWompicol(models.Model):
         self.wompicol_event_url = prod_url
         self.wompicol_test_event_url = test_url
 
-    def _get_wompicol_urls(self, environment):
-        """ Wompi Colombia URLs this method should be called to
-        get the url to post the form"""
+    def _get_wompicol_api_url(self, environment):
+        """This method should be called to get the api
+        url to query depending on the environment."""
         if environment == 'prod':
             return 'https://production.wompi.co/v1'
         else:
             return 'https://sandbox.wompi.co/v1'
+
+    def _get_wompicol_urls(self, environment):
+        """ Wompi Colombia URLs this method should be called to
+        get the url to post the form"""
+        # Using the webcheckout integration there's only one url
+        # wether is production or test, is dependant on the keys.
+        return "https://checkout.wompi.co/p/"
 
     def _get_keys(self, environment=None):
         """Wompi keys change wether is prod or test
