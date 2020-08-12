@@ -2,8 +2,7 @@
 <odoo>
     <template id="wompicol_form">
         <div>
-            <input type="hidden" name="data_set" t-att-data-action-url="tx_url" data-remove-me=""/>
-            <t t-set="form_method" t-value="'GET'"/>
+            <input type="hidden" name="data_set" t-att-data-action-url="tx_url" t-att-data-method="get" data-remove-me=""/>
             <input type="hidden" name="public-key" t-att-value='publickey'/>
             <input type="hidden" name="currency" t-att-value='currency'/>
             <input type="hidden" name="amount-in-cents" t-att-value='amountcents'/>
