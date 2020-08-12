@@ -84,8 +84,6 @@ class PaymentAcquirerWompicol(models.Model):
     def _get_wompicol_urls(self, environment):
         """ Wompi Colombia URLs this method should be called to
         get the url to post the form"""
-        # Using the webcheckout integration there's only one url
-        # wether is production or test, is dependant on the keys.
         return "https://checkout.wompi.co/p/"
 
     def _get_keys(self, environment=None):
@@ -113,9 +111,9 @@ class PaymentAcquirerWompicol(models.Model):
         tx = self.env[
                 'payment.transaction'
                 ].search([('reference', '=', values.get('reference'))])
-        _logger.info(f"What is tx {tx}")
-        _logger.info(f"What is values {values}")
-        # TODO: Should I raise an exception if currency is not 'COP'
+        # _logger.info(f"What is tx {tx}")
+        # _logger.info(f"What is values {values}")
+
         # Wompi won't allow duplicate reference code even if payment was
         # failed last time, so replace reference code if payment is not
         # done or pending. Or is it handled by the base class?
@@ -124,11 +122,12 @@ class PaymentAcquirerWompicol(models.Model):
             tx.reference = str(uuid.uuid4())
         wompicol_tx_values = dict(
             values,
+            # wompi_url="https://checkout.wompi.co/p/",
             publickey=self._get_keys()[1],
             currency=values['currency'].name,  # COP, is the only one supported
             amountcents=int(values['amount'] * 100),  # Cents, *100 and an int
-            referenceCode=values.get('reference'),
-            redirectUrl=urls.url_join(base_url, '/payment/wompicol/response'),
+            referenceCode=f"{values['reference']}-{tx.reference}",
+            redirectUrl=urls.url_join(base_url, '/payment/wompicol/client_return'),
         )
         return wompicol_tx_values
 
