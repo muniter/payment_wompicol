@@ -14,8 +14,8 @@ _logger = logging.getLogger(__name__)
 class WompiColController(http.Controller):
 
     @http.route(['/payment/wompicol/response',
-                 '/payment/wompicol_test/response'],
-                type='http', auth='public', csrf=False)
+                '/payment/wompicol_test/response'],
+                type='json', auth='public', csrf=False)
     def wompicol_response(self, **post):
         """ Wompi Colombia """
         # Wompi servers will post the event information
