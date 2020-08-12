@@ -13,9 +13,14 @@ This are the check list to implement Wompi.
 - [x] Url for prod and testing
 - [x] Wompi controller with different url for testing.
     - [ ] Implement a way for the methods to know if a test Transaction
+        NOTE: Wompi clien browser comes back with the transaction environment.
 - [x] Key formatting per environment NOTE: Wompi doesn't format the keys, It just had completely different keys. So two new fields must be created to deal with this.
 - [x] Values required by Wompi
+    - [x] Fix method, odoo sends POST by default, Wompi wants GET.
 - [x] ResponseUrl, process when It's client GET and not wompi api POST.
+    NOTE: Wompi client comes back with the wompi transcation ID. 
+    - [x] Send the client to the transaction outcome page
+    - [x] Filter so only wompi posts are processed
     - [ ] Test
 - [ ] Controller method on response url
     - [ ] Payment Transaction methods to process Wompi events.
