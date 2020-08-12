@@ -7,6 +7,7 @@ import werkzeug
 
 from odoo import http
 from odoo.http import request
+from odoo.http import Response
 
 _logger = logging.getLogger(__name__)
 
@@ -45,10 +46,15 @@ class WompiColController(http.Controller):
                                 post response data %s', pprint.pformat(post))
                 request.env['payment.transaction'].sudo().form_feedback(
                         post, 'wompicol')
+            # If has the data return 200
+            return Response("Wompi Event Received", status=200)
+
+        # Return to the main page
+        return werkzeug.utils.redirect('/')
 
     @http.route('/payment/wompicol/client_return', type='http',
                 auth='public', csrf=False)
-    def wompicol_response(self, **post):
+    def wompicol_client_return(self, **post):
         """ Wompi Colombia """
         # The client browser will comeback with the following data
         # {
