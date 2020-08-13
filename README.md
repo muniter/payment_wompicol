@@ -17,6 +17,7 @@ This are the check list to implement Wompi.
 - [x] Key formatting per environment NOTE: Wompi doesn't format the keys, It just had completely different keys. So two new fields must be created to deal with this.
 - [x] Values required by Wompi
     - [x] Fix method, odoo sends POST by default, Wompi wants GET.
+    - [ ] Seems like wompi wants values ending in 00
 - [x] ResponseUrl, process when It's client GET and not wompi api POST.
     NOTE: Wompi client comes back with the wompi transcation ID. 
     - [x] Send the client to the transaction outcome page
@@ -31,6 +32,7 @@ This are the check list to implement Wompi.
         - [x] _wompicol_form_validate takes care of setting the transaction state from the received data given it passes the invalid_parameters method.
         - [ ] Call wompi api to check if the event is actually true.
         - [ ] Test
+- [ ] Review JS, to use super, instead of overwriting. 
 - [ ] Tests
 
 ## License MIT

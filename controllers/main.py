@@ -4,6 +4,7 @@
 import logging
 import pprint
 import werkzeug
+import json
 
 from odoo import http
 from odoo.http import request
@@ -17,7 +18,7 @@ class WompiColController(http.Controller):
     @http.route(['/payment/wompicol/response',
                 '/payment/wompicol_test/response'],
                 type='json', auth='public', csrf=False)
-    def wompicol_response(self, **post):
+    def wompicol_response(self):
         """ Wompi Colombia """
         # Wompi servers will post the event information
         # {
@@ -39,15 +40,17 @@ class WompiColController(http.Controller):
         #   },
         #   "sent_at":  "2018-07-20T16:45:05.000Z"
         # }
-        if post:
-            if post.get('data') and post.get('data').get('transaction'):
-                _logger.info(
-                        'Wompicol: entering form_feedback with\
-                                post response data %s', pprint.pformat(post))
-                request.env['payment.transaction'].sudo().form_feedback(
-                        post, 'wompicol')
-            # If has the data return 200
-            return Response("Wompi Event Received", status=200)
+        post = json.loads(request.httprequest.data)
+        if post and post.get('data') and post.get('data').get('transaction'):
+            _logger.info(
+                'Wompicol: entering form_feedback with post response data %s',
+                pprint.pformat(post))
+            request.env['payment.transaction'].sudo().form_feedback(post,
+                                                                    'wompicol')
+        else:
+            _logger.info(
+                'Wompicol: for feedback entered with incomplete data %s',
+                pprint.pformat(post))
 
         # Return to the main page
         return werkzeug.utils.redirect('/')

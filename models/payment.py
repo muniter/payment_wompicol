@@ -111,22 +111,21 @@ class PaymentAcquirerWompicol(models.Model):
         tx = self.env[
                 'payment.transaction'
                 ].search([('reference', '=', values.get('reference'))])
-        # _logger.info(f"What is tx {tx}")
-        # _logger.info(f"What is values {values}")
 
         # Wompi won't allow duplicate reference code even if payment was
         # failed last time, so replace reference code if payment is not
         # done or pending. Or is it handled by the base class?
         if tx.state not in ['done', 'pending']:
             # Replace the reference code with a new one
-            tx.reference = str(uuid.uuid4())
+            reference = values.get('reference', '')
+            tx.reference = f"{reference}-{str(uuid.uuid4())}"
         wompicol_tx_values = dict(
             values,
             # wompi_url="https://checkout.wompi.co/p/",
             publickey=self._get_keys()[1],
             currency=values['currency'].name,  # COP, is the only one supported
             amountcents=int(values['amount'] * 100),  # Cents, *100 and an int
-            referenceCode=f"{values['reference']}-{tx.reference}",
+            referenceCode=tx.reference,
             redirectUrl=urls.url_join(base_url, '/payment/wompicol/client_return'),
         )
         return wompicol_tx_values
@@ -203,6 +202,10 @@ class PaymentTransactionWompiCol(models.Model):
         # If the reference code doesn't match
         if self.acquirer_reference and tx_data.get('reference') != self.acquirer_reference:
             invalid_parameters.append(('Reference code', tx_data.get('reference'), self.acquirer_reference))
+
+        if not invalid_parameters:
+            # _logger.info('Wompicol: tx %s: has no invalid parameters' % (invalid_parameters))
+            pass
 
         return invalid_parameters
 
