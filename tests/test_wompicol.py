@@ -1,4 +1,5 @@
 import logging
+import math
 import lxml
 from werkzeug import urls
 
@@ -22,7 +23,7 @@ class WompicolCommon(PaymentAcquirerCommon):
             # 'wompicol_event_url': 'dummy',
         })
         self.currency_col = self.env.ref('base.COP')
-        self.amount = 44900.00
+        self.amount = 44900.23
 
 
 @tagged('post_install', '-at_install', 'external', '-standard', 'wompicol')
@@ -57,7 +58,7 @@ class WompicolForm(WompicolCommon):
         form_values = {
                 "publickey": self.wompicol.wompicol_public_key,
                 "currency": self.currency_col.name,
-                "amountcents": int(self.amount * 100),
+                "amountcents": math.ceil(self.amount) * 100,
                 "referenceCode": 'wompi_test_transaction',
                 "redirectUrl": urls.url_join(
                                     base_url,
@@ -67,30 +68,39 @@ class WompicolForm(WompicolCommon):
         # check form result
         tree = lxml.etree.fromstring(res)
         data_set = tree.xpath("//input[@name='data_set']")
-        public_key = tree.xpath("//input[@name='public-key']")
-        public_key = tree.xpath("//input[@name='public-key']")
-        currency = tree.xpath("//input[@name='currency']")
-        # reference = tree.xpath("//input[@name='reference']")
+        public_key = tree.xpath("//input[@name='public-key']")[0].get('value')
+        currency = tree.xpath("//input[@name='currency']")[0].get('value')
+        amount = tree.xpath("//input[@name='amount-in-cents']")[0].get('value')
 
-        # Checking number of 'data_set' in the tree
+        # Data set in the tree
         self.assertEqual(
                 len(data_set),
                 1,
-                'Wompicol: Found %d "data_set" input instead of 1' % len(data_set))
+                'Wompicol: Found %d "data_set" inputs instead of 1' % len(data_set))
+        # Proper action url
         self.assertEqual(
                 data_set[0].get('data-action-url'),
                 'https://checkout.wompi.co/p/',
-                'wompicol: wrong form GET url')
+                'wompicol: wrong form action url')
+        # Proper public key
         self.assertEqual(
-                public_key[0].get('value'),
-                self.wompicol.wompicol_public_key,
+                public_key,
+                form_values["publickey"],
                 'wompicol: wrong form render publicKey')
+        # Proper amount in cents only 00 at the end
+        self.assertTrue(str(amount)[-2:] == '00',
+                'wompicol: wrong amount %s, only 00 allowed as last two digits.'
+                % amount)
+        # Proper amount in cents
         self.assertEqual(
-                currency[0].get('value'),
+                amount,
+                str(form_values["amountcents"]),
+                'wompicol: wrong amount of cents rendered')
+        # Propeor currency value
+        self.assertEqual(
+                currency,
                 'COP',
                 'wompicol: Wrong currency only COP is supported')
-
-        # TODO: Test case when currency is not an int, or doesn't end in 00
 
     def test_20_wompicol_form_management(self):
         self.assertEqual(self.wompicol.state, 'test', 'wompicol: test without test environment')
@@ -101,7 +111,7 @@ class WompicolForm(WompicolCommon):
               "data": {
                 "transaction": {
                     "id": "01-1532941443-49201",
-                    "amount_in_cents": 4490000,
+                    "amount_in_cents": 4490100,
                     "reference": "wompi_test_transaction",
                     "customer_email": "juan.perez@gmail.com",
                     "currency": "COP",
@@ -113,7 +123,8 @@ class WompicolForm(WompicolCommon):
                     "payment_source_id": None
                   }
               },
-              "sent_at":  "2018-07-20T16:45:05.000Z"
+              "sent_at":  "2018-07-20T16:45:05.000Z",
+              "noconfirm": 1, # Avoids calling wompi api with false id
             }
 
         # create tx
@@ -130,10 +141,16 @@ class WompicolForm(WompicolCommon):
 
         # validate transaction
         tx.form_feedback(wompi_event_post, 'wompicol')
-        # check
-        self.assertEqual(tx.state, 'done', 'wompicol: wrong state after receiving a valid pending notification')
-        self.assertEqual(tx.state_message, f'Wompicol states the transactions as APPROVED', 'wompicol: bad state message')
-        self.assertEqual(tx.acquirer_reference, 'wompi_test_transaction', 'wompicol: wrong txn_id after receiving a valid approved notification')
+        # Check the transaction is set to done when APPROVED is received.
+        self.assertEqual(
+                tx.state,
+                'done',
+                'wompicol: wrong state after receiving a valid approved notification')
+        # Check if the created acquirer reference is equal to what wompi sent
+        self.assertEqual(
+                tx.acquirer_reference,
+                '01-1532941443-49201',
+                'wompicol: wrong txn_id after receiving a valid event notification')
 
         # update transaction
         tx.write({
@@ -142,8 +159,17 @@ class WompicolForm(WompicolCommon):
 
         # Now test with a pending
         wompi_event_post["data"]["transaction"]["status"] = 'PENDING'
-        # validate transaction
+
+        # validate transaction now with new state
         tx.form_feedback(wompi_event_post, 'wompicol')
-        # check transaction
-        self.assertEqual(tx.state, 'pending', 'wompicol: wrong state after receiving a valid pending notification')
-        self.assertEqual(tx.state_message, f'Wompicol states the transactions as PENDING', 'wompicol: bad state message')
+
+        # Check the transaction is set to done when PENDING is received.
+        self.assertEqual(
+                tx.state,
+                'pending',
+                'wompicol: wrong state after receiving a valid pending notification')
+        # Check if the created acquirer reference is equal to what wompi sent
+        self.assertEqual(
+                tx.acquirer_reference,
+                '01-1532941443-49201',
+                'wompicol: wrong txn_id after receiving a valid event notification')
