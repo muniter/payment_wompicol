@@ -180,7 +180,7 @@ class PaymentTransactionWompiCol(models.Model):
             error_msg = (_('WompiCol: received data for reference %s; multiple orders found') % (reference))
             raise ValidationError(error_msg)
         else:
-            _logger.info = ('WompiCol: Recieved reference %s transaction id found %s', (reference, transaction.id))
+            _logger.info('WompiCol: received reference %s transaction id found %s' % (reference, transaction.id))
 
         return transaction
 
@@ -201,7 +201,7 @@ class PaymentTransactionWompiCol(models.Model):
             invalid_parameters.append(('Reference code', tx_data.get('reference'), self.acquirer_reference))
 
         if not invalid_parameters:
-            # _logger.info('Wompicol: tx %s: has no invalid parameters' % (invalid_parameters))
+            _logger.info('Wompicol: tx %s: has no invalid parameters' % (invalid_parameters))
             pass
 
         return invalid_parameters
@@ -223,7 +223,7 @@ class PaymentTransactionWompiCol(models.Model):
         }
 
         if status == 'APPROVED':
-            _logger.info('Validated WompiCol payment for tx %s: set as done' % (self.reference))
+            _logger.info(f'Validated WompiCol payment for tx {self.reference}: set as done')
             res.update(state='done', date=fields.Datetime.now())
             self._set_transaction_done()
             self.write(res)

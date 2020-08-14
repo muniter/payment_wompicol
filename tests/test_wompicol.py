@@ -1,19 +1,22 @@
+import logging
+import lxml
 from werkzeug import urls
 
 from odoo.addons.payment.tests.common import PaymentAcquirerCommon
 from odoo.tests import tagged
 
 
+_logger = logging.getLogger(__name__)
 class WompicolCommon(PaymentAcquirerCommon):
 
     def setUp(self):
         super(WompicolCommon, self).setUp()
-        self.wompicol = self.env.ref('payment.payment_acquirer_wompicol')
+        self.wompicol = self.env.ref('payment_wompicol.payment_acquirer_wompicol')
         self.wompicol.write({
             'wompicol_private_key': 'dummy',
-            'wompicol_public_key_key': 'dummy',
+            'wompicol_public_key': 'dummy',
             'wompicol_test_private_key': 'dummy',
-            'wompicol_test_public_key_key': 'dummy',
+            'wompicol_test_public_key': 'dummy',
             'state': 'test',
             # 'wompicol_test_event_url': 'dummy',
             # 'wompicol_event_url': 'dummy',
@@ -27,7 +30,7 @@ class WompicolForm(WompicolCommon):
 
     def test_10_wompicol_form_render(self):
         '''Check the form is rendering correctly'''
-        self.assertEqual(self.wompcol.state, 'test', 'test without test environment')
+        self.assertEqual(self.wompicol.state, 'test', 'test without test environment')
 
         # ----------------------------------------
         # Test: button direct rendering
@@ -36,7 +39,7 @@ class WompicolForm(WompicolCommon):
         self.env['payment.transaction'].create({
             'reference': 'wompi_test_transaction',
             'amount': self.amount,
-            'currency_id': self.currency_col,
+            'currency_id': self.currency_col.id,
             'acquirer_id': self.wompicol.id,
             'partner_id': self.buyer_id
         })
@@ -52,7 +55,7 @@ class WompicolForm(WompicolCommon):
                 ].sudo().get_param('web.base.url')
 
         form_values = {
-                "publickey": self.wompcol.publickey,
+                "publickey": self.wompicol.wompicol_public_key,
                 "currency": self.currency_col.name,
                 "amountcents": int(self.amount * 100),
                 "referenceCode": 'wompi_test_transaction',
@@ -62,31 +65,35 @@ class WompicolForm(WompicolCommon):
                 }
 
         # check form result
-        tree = objectify.fromstring(res)
-
+        tree = lxml.etree.fromstring(res)
         data_set = tree.xpath("//input[@name='data_set']")
+        public_key = tree.xpath("//input[@name='public-key']")
+        public_key = tree.xpath("//input[@name='public-key']")
+        currency = tree.xpath("//input[@name='currency']")
+        # reference = tree.xpath("//input[@name='reference']")
+
         # Checking number of 'data_set' in the tree
         self.assertEqual(
                 len(data_set),
                 1,
                 'Wompicol: Found %d "data_set" input instead of 1' % len(data_set))
         self.assertEqual(
-                data_set[0].get('data-public-key'),
-                self.wompcol.publickey,
-                'wompicol: wrong form POST publicKey')
-        self.assertEqual(
                 data_set[0].get('data-action-url'),
                 'https://checkout.wompi.co/p/',
                 'wompicol: wrong form GET url')
         self.assertEqual(
-                data_set[0].get('data-currency'),
+                public_key[0].get('value'),
+                self.wompicol.wompicol_public_key,
+                'wompicol: wrong form render publicKey')
+        self.assertEqual(
+                currency[0].get('value'),
                 'COP',
                 'wompicol: Wrong currency only COP is supported')
 
         # TODO: Test case when currency is not an int, or doesn't end in 00
 
     def test_20_wompicol_form_management(self):
-        self.assertEqual(self.wompcol.state, 'test', 'wompicol: test without test environment')
+        self.assertEqual(self.wompicol.state, 'test', 'wompicol: test without test environment')
 
         # typical data posted by wompi after client has successfully paid
         wompi_event_post = {
@@ -113,7 +120,7 @@ class WompicolForm(WompicolCommon):
         tx = self.env['payment.transaction'].create({
             'reference': 'wompi_test_transaction',
             'amount': self.amount,
-            'currency_id': self.currency_col,
+            'currency_id': self.currency_col.id,
             'acquirer_id': self.wompicol.id,
             'partner_id': self.buyer_id,
             'partner_name': 'Norbert Buyer',
@@ -122,7 +129,7 @@ class WompicolForm(WompicolCommon):
         })
 
         # validate transaction
-        tx.form_feedback(wompi_event_post, 'wompcol')
+        tx.form_feedback(wompi_event_post, 'wompicol')
         # check
         self.assertEqual(tx.state, 'done', 'wompicol: wrong state after receiving a valid pending notification')
         self.assertEqual(tx.state_message, f'Wompicol states the transactions as APPROVED', 'wompicol: bad state message')
@@ -136,7 +143,7 @@ class WompicolForm(WompicolCommon):
         # Now test with a pending
         wompi_event_post["data"]["transaction"]["status"] = 'PENDING'
         # validate transaction
-        tx.form_feedback(wompi_event_post, 'wompcol')
+        tx.form_feedback(wompi_event_post, 'wompicol')
         # check transaction
         self.assertEqual(tx.state, 'pending', 'wompicol: wrong state after receiving a valid pending notification')
-        self.assertEqual(tx.state_message, 'PENDING', f'Wompicol states the transactions as PENDING', 'wompicol: bad state message')
+        self.assertEqual(tx.state_message, f'Wompicol states the transactions as PENDING', 'wompicol: bad state message')
