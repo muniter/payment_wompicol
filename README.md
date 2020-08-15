@@ -35,6 +35,7 @@ This are the check list to implement Wompi.
         - [x] _wompicol_form_validate takes care of setting the transaction state from the received data given it passes the invalid_parameters method.
         - [x] Call wompi api to check if the event is actually true.
             - [ ] Test
+- [ ] Query transaction manually if client is back, and transaction state hasn't changed, which means wompi hasn't reported `transaction.update` event.
 - [x] Tests
 
 ## License MIT
