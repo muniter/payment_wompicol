@@ -6,6 +6,7 @@ import json
 from odoo import http
 from odoo.http import request
 from odoo.http import Response
+from odoo.addons.payment.models.payment_acquirer import ValidationError
 
 _logger = logging.getLogger(__name__)
 
@@ -38,10 +39,22 @@ class WompiColController(http.Controller):
         #   "sent_at":  "2018-07-20T16:45:05.000Z"
         # }
         post = json.loads(request.httprequest.data)
-        if post and post.get('data') and post.get('data').get('transaction'):
+        _logger.info(f"The methods {dir(request.httprequest)}")
+        __import__('pdb').set_trace()
+        if post:
+            # If entered on the test endpoint, let's add it to the data
+            if 'wompicol_test' in request.httprequest.path:
+                post["test"] = 1
+
+            # Log the event data
             _logger.info(
                 'Wompicol: entering form_feedback with post response data %s',
                 pprint.pformat(post))
+
+            if post.get('noconfirm'):
+                raise ValidationError('Wompicol: should not receive "noconfirm" on the controller')
+
+            # Process the data
             request.env['payment.transaction'].sudo().form_feedback(post,
                                                                     'wompicol')
         else:
@@ -49,7 +62,6 @@ class WompiColController(http.Controller):
                 'Wompicol: for feedback entered with incomplete data %s',
                 pprint.pformat(post))
 
-        # Return to the main page
         return werkzeug.utils.redirect('/')
 
     @http.route('/payment/wompicol/client_return', type='http',
