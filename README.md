@@ -12,27 +12,29 @@ This are the check list to implement Wompi.
     NOTE: To use the api integration, but also to check on the state of a transaction.
 - [x] Url for prod and testing
 - [x] Wompi controller with different url for testing.
-    - [ ] Implement a way for the methods to know if a test Transaction
-        NOTE: Wompi clien browser comes back with the transaction environment.
+    - [x] Implement a way to log if test Transaction
+            NOTE: The state message will show if the transaction is a test
 - [x] Key formatting per environment NOTE: Wompi doesn't format the keys, It just had completely different keys. So two new fields must be created to deal with this.
 - [x] Values required by Wompi
     - [x] Fix method, odoo sends POST by default, Wompi wants GET.
-    - [ ] Seems like wompi wants values ending in 00
+        - [x] Fix the way I'm accomplishing this, use JS super instead.
+    - [x] Seems like wompi wants values ending in 00 fix this
+        NOTE: Fixed with `math.ciel` and also created test cases.
 - [x] ResponseUrl, process when It's client GET and not wompi api POST.
     NOTE: Wompi client comes back with the wompi transcation ID. 
     - [x] Send the client to the transaction outcome page
     - [x] Filter so only wompi posts are processed
-    - [ ] Test
-- [ ] Controller method on response url
-    - [ ] Payment Transaction methods to process Wompi events.
+        NOTE: Ended up just not handling it in the same method.
+    - [x] Test
+- [x] Controller method on response url
+    - [x] Payment Transaction methods to process Wompi events.
         - [x] Instruction to what url for events to set on the wompi console.
-            - [ ] Test if on change of the base url, test and prod url also changes in the config.
+            - [x] Test if on change of the base url, test and prod url also changes in the config.
         - [x] _wompicol_form_get_tx_from_data process the data from the acquirer and validates, a transaction exists, if exists it's returned, if more than one or none are found, error out.
         - [x] _wompicol_form_get_invalid_parameters: Returns invalid parameters sent from the payment acquirer or a fake request, ant the parent class takes care of logging it.
         - [x] _wompicol_form_validate takes care of setting the transaction state from the received data given it passes the invalid_parameters method.
-        - [ ] Call wompi api to check if the event is actually true.
-        - [ ] Test
-- [ ] Review JS, to use super, instead of overwriting. 
-- [ ] Tests
+        - [x] Call wompi api to check if the event is actually true.
+            - [ ] Test
+- [x] Tests
 
 ## License MIT
