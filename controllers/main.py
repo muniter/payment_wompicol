@@ -39,8 +39,6 @@ class WompiColController(http.Controller):
         #   "sent_at":  "2018-07-20T16:45:05.000Z"
         # }
         post = json.loads(request.httprequest.data)
-        _logger.info(f"The methods {dir(request.httprequest)}")
-        __import__('pdb').set_trace()
         if post:
             # If entered on the test endpoint, let's add it to the data
             if 'wompicol_test' in request.httprequest.path:
