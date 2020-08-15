@@ -3,25 +3,20 @@ odoo.define("payment_wompicol.payment_form", ['web.public.widget', 'payment.paym
 
     var PaymentForm = require('payment.payment_form');
     var publicWidget = require('web.public.widget');
-    console.log(publicWidget, PaymentForm);
     PaymentForm.include({
         payEvent: function (ev) {
             ev.preventDefault();
-            console.log("Calling the overwrite of payEvent");
             var $checkedRadio = this.$('input[type="radio"]:checked');
 
             // first we check that the user has selected a wompicil as payment method
             // is so we run a modified payEvent which uses get instead of post.
             if ($checkedRadio.length === 1 & this.isFormPaymentRadio($checkedRadio) && $checkedRadio.data('provider') === 'wompicol') {
-                console.log("Calling the _wompicolPayEvent");
                 return this._wompicolPayEvent(ev);
             } else {
-                console.log("Calling the super payEvent", $checkedRadio);
                 return this._super.apply(this, arguments);
             }
         },
         _wompicolPayEvent: function (ev) {
-            console.log("Being called");
             ev.preventDefault();
             var form = this.el;
             var checked_radio = this.$('input[type="radio"]:checked');
