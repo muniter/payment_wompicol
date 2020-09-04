@@ -1,9 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data noupdate="1">
-        <record id="payment_icon_cc_wompicol" model="payment.icon">
+        <record id="payment_icon_wompicol" model="payment.icon">
             <field name="name">Wompicol</field>
             <field name="image" type="base64" file="payment_wompicol/static/src/img/wompicol_icon.png"/>
+        </record>
+
+        <record id="payment_icon_pse_ach" model="payment.icon">
+            <field name="name">PSE</field>
+            <field name="image" type="base64" file="payment_wompicol/static/src/img/pse.png"/>
         </record>
 
         <record id="payment_acquirer_wompicol" model="payment.acquirer">
@@ -27,7 +32,8 @@
                 </p>
             </field>
             <field name="payment_icon_ids" eval='[(6, 0, [ref("payment.payment_icon_cc_diners_club_intl"),
-                ref("payment.payment_icon_cc_wompicol")
+                ref("payment.payment_icon_wompicol")
+                ref("payment.payment_icon_pse_ach")
                 ref("payment.payment_icon_cc_visa")
                 ref("payment.payment_icon_cc_mastercard"),
                 ref("payment.payment_icon_cc_maestro"),
