@@ -312,11 +312,12 @@ class PaymentTransactionWompiCol(models.Model):
                                        tx_data.get('amount_in_cents'), '%'
                                        % amount_in_cents))
 
-        # If the reference code doesn't match
-        if self.acquirer_reference and tx_data.get('reference') \
+        # If the id from wompi and the id set existing doesn't match
+        # this is maínly for transaction updates.
+        if self.acquirer_reference and tx_data.get('id') \
            != self.acquirer_reference:
             invalid_parameters.append(('Reference code',
-                                       tx_data.get('reference'),
+                                       tx_data.get('id'),
                                        self.acquirer_reference))
 
         if not invalid_parameters:
