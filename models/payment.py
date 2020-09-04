@@ -2,6 +2,7 @@ import logging
 import uuid
 import math
 import requests
+import pprint
 
 from hashlib import md5
 from werkzeug import urls
@@ -143,7 +144,6 @@ class PaymentAcquirerWompicol(models.Model):
 class PaymentTransactionWompiCol(models.Model):
     _inherit = 'payment.transaction'
 
-    # TODO: Finish this
     def _wompicol_get_data_manually(self, id, environment):
         """When the client has returned and the payment transaction hasn't been
         updated, check manually and update the transaction"""
@@ -164,9 +164,18 @@ class PaymentTransactionWompiCol(models.Model):
         # If request succesful
         if wompi_data.status_code == 200:
             wompi_data = wompi_data.json()
+            _logger.info("Wompicol: Sucesfully called api for id: %s it returned data: %s"
+                         % id, pprint.pformat(wompi_data))
+            # pprint.pformat(post))
             # Data needed to validate is just on 'data'
             # Format it how it expects it
             wompi_data["data"] = {"transaction": wompi_data["data"]}
+            # This avoid confirming the event, since the data is being
+            # asked from the server. Instead of listening.
+            wompi_data["noconfirm"] = True
+            # If the transaction is a test.
+            if environment == 'test':
+                wompi_data["test"] = True
             _logger.info("Wompicol: creating transaction manually, by calling the api for acquirer reference %s" % id)
             self.env['payment.transaction'].sudo().form_feedback(wompi_data, 'wompicol')
 
@@ -222,6 +231,7 @@ class PaymentTransactionWompiCol(models.Model):
         request_url = f"{api_url}/transactions/{tx_data.get('id')}"
         # ask for the data
         wompi_data = requests.get(request_url, timeout=60)
+        _logger.info('Wompicol: calling wompi api to validate the data.')
         # If request succesful
         if wompi_data.status_code == 200:
             # Data needed to validate is just on 'data'
@@ -310,8 +320,8 @@ class PaymentTransactionWompiCol(models.Model):
                                        self.acquirer_reference))
 
         if not invalid_parameters:
-            _logger.info('Wompicol: tx %s: has no invalid parameters' %
-                         (invalid_parameters))
+            _logger.info('Wompicol: tx %s: has no invalid parameters'
+                         % (self.reference))
 
         return invalid_parameters
 
@@ -344,24 +354,24 @@ class PaymentTransactionWompiCol(models.Model):
             res["state_message"] = 'TEST TRANSACTION: ' + res["state_message"]
 
         if status == 'APPROVED':
-            _logger.info('Validated WompiCol payment for tx %s: set as done' % (self.reference))
+            _logger.info('Validated WompiCol payment for tx %s: setting as done' % (self.reference))
             res.update(state='done', date=fields.Datetime.now())
             self._set_transaction_done()
             self.write(res)
             self.execute_callback()
             return True
         elif status == 'PENDING':
-            _logger.info('Received notification for WompiCol payment %s: set as pending' % (self.reference))
+            _logger.info('Received notification for WompiCol payment %s: setting as pending' % (self.reference))
             res.update(state='pending')
             self._set_transaction_pending()
             return self.write(res)
         elif status in ['VOIDED', 'DECLINED', 'ERROR']:
-            _logger.info('Received notification for WompiCol payment %s: set as Cancel' % (self.reference))
+            _logger.info('Received notification for WompiCol payment %s: setting as Cancel' % (self.reference))
             res.update(state='cancel')
             self._set_transaction_cancel()
             return self.write(res)
         else:
-            error = 'Received unrecognized status for WompiCol payment %s: %s, set as error' % (self.reference, status)
+            error = 'Received unrecognized status for WompiCol payment %s: %s, setting as error' % (self.reference, status)
             _logger.info(error)
             res.update(state='cancel', state_message=error)
             self._set_transaction_cancel()
