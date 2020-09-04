@@ -146,19 +146,28 @@ class PaymentTransactionWompiCol(models.Model):
     # TODO: Finish this
     def _wompicol_get_data_manually(self, id, environment):
         """When the client has returned and the payment transaction hasn't been
-        updated, check manually and create the transaction"""
+        updated, check manually and update the transaction"""
+        # Check first if this transaciont has been updated already
+        if id:
+            # If there's a transaction with that id as acquirer_reference,
+            # it has already been updated, because that value is only set
+            # once a response is received.
+            tx = self.env[
+                    'payment.transaction'
+                    ].search([('acquirer_reference', '=', id)])
+            if len(tx):
+                return
+
         api_url = self.acquirer_id._get_wompicol_api_url(environment)
-        # Format the url
         request_url = f"{api_url}/transactions/{id}"
-        # ask for the data
         wompi_data = requests.get(request_url, timeout=60)
         # If request succesful
         if wompi_data.status_code == 200:
-            # Data needed to validate is just on 'data'
             wompi_data = wompi_data.json()
+            # Data needed to validate is just on 'data'
             # Format it how it expects it
             wompi_data["data"] = {"transaction": wompi_data["data"]}
-            _logger.info("Wompicol: creating transaction manully, by calling the api for acquirer reference %s" % id)
+            _logger.info("Wompicol: creating transaction manually, by calling the api for acquirer reference %s" % id)
             self.env['payment.transaction'].sudo().form_feedback(wompi_data, 'wompicol')
 
     def _wompicol_confirm_event(self, data):
@@ -204,7 +213,7 @@ class PaymentTransactionWompiCol(models.Model):
         # }
 
         # Values to check
-        to_check = ['id', 'reference', 'currency', 'status']
+        to_check = ['id', 'reference', 'currency', 'status', 'amount_in_cents']
         # Data posted to the server
         tx_data = data.get('data').get('transaction')
         # Get the api url
@@ -226,7 +235,7 @@ class PaymentTransactionWompiCol(models.Model):
                 error_msg = (_('WompiCol: validation of data received vs reported by wompi api failed for parameters %s') % (invalid))
                 raise ValidationError(error_msg)
             else:
-                _logger.info('Wompicol: data received sucesfully validated with wompi api')
+                _logger.info('Wompicol: data received sucessfully validated with wompi api')
                 return True
         else:
             _logger.warn('Wompicol: unable to query wompi api for transaction ref: %s, response code %s' % (self.reference, wompi_data.status_code))
@@ -335,7 +344,7 @@ class PaymentTransactionWompiCol(models.Model):
             res["state_message"] = 'TEST TRANSACTION: ' + res["state_message"]
 
         if status == 'APPROVED':
-            _logger.info(f'Validated WompiCol payment for tx {self.reference}: set as done')
+            _logger.info('Validated WompiCol payment for tx %s: set as done' % (self.reference))
             res.update(state='done', date=fields.Datetime.now())
             self._set_transaction_done()
             self.write(res)
