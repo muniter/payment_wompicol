@@ -1,41 +1,23 @@
 # Wompi Colombia Payment Acquirer
 
-This is an implementation of the [Wompi](https://wompi.co/) payment acquirer/gateway for Odoo, in the form of web checkout, as specified in the [documentation](https://docs.wompi.co/docs/en/widget-checkout-web).
+This is an implementation of the [Wompi](https://wompi.co/) payment acquirer/gateway for Odoo 13, in the form of web checkout, as specified in the [documentation](https://docs.wompi.co/docs/en/widget-checkout-web).
 
-## STATUS: WIP
+## Notes
 
-### Progress
+This integration uses the *checkout* type of integration, in which the client is sent with an HTTP GET request, with the data encoded in the url, to the Wompi site, in which they perform the payment. After the payment has been completed, Wompi servers POST some json to the event url (which is defined in their platform backend, this module will tell you what you should set it to), this data is processed to set the transaction state in Odoo, if the client get's back and no event has been received we ask their api.
 
-This are the check list to implement Wompi.
+### Steps
 
-- [x] What is the private key used for?
-    NOTE: To use the api integration, but also to check on the state of a transaction.
-- [x] Url for prod and testing
-- [x] Wompi controller with different url for testing.
-    - [x] Implement a way to log if test Transaction
-            NOTE: The state message will show if the transaction is a test
-- [x] Key formatting per environment NOTE: Wompi doesn't format the keys, It just had completely different keys. So two new fields must be created to deal with this.
-- [x] Values required by Wompi
-    - [x] Fix method, odoo sends POST by default, Wompi wants GET.
-        - [x] Fix the way I'm accomplishing this, use JS super instead.
-    - [x] Seems like wompi wants values ending in 00 fix this
-        NOTE: Fixed with `math.ciel` and also created test cases.
-- [x] ResponseUrl, process when It's client GET and not wompi api POST.
-    NOTE: Wompi client comes back with the wompi transcation ID. 
-    - [x] Send the client to the transaction outcome page
-    - [x] Filter so only wompi posts are processed
-        NOTE: Ended up just not handling it in the same method.
-    - [x] Test
-- [x] Controller method on response url
-    - [x] Payment Transaction methods to process Wompi events.
-        - [x] Instruction to what url for events to set on the wompi console.
-            - [x] Test if on change of the base url, test and prod url also changes in the config.
-        - [x] _wompicol_form_get_tx_from_data process the data from the acquirer and validates, a transaction exists, if exists it's returned, if more than one or none are found, error out.
-        - [x] _wompicol_form_get_invalid_parameters: Returns invalid parameters sent from the payment acquirer or a fake request, ant the parent class takes care of logging it.
-        - [x] _wompicol_form_validate takes care of setting the transaction state from the received data given it passes the invalid_parameters method.
-        - [x] Call wompi api to check if the event is actually true.
-            - [ ] Test
-- [ ] Query transaction manually if client is back, and transaction state hasn't changed, which means wompi hasn't reported `transaction.update` event.
-- [x] Tests
+1. Client redirected to Wompi page with the data encoded in the url.
+1. Wompi POST event (what happened with the transaction).
+    1. The posted data is processed to see if it makes sense
+    1. Since there's no crypto to verify is legit, we query their endpoint, and compare what they report vs what was received.
+    1. Set the transaction state.
+1. Client browser comes back only with Wompi internal transaction id.
+    1. We check if there's transaction with reference code that matches wompi transcation id.
+    1. If there's one we do nothing, this means the event reached first and it has been processed.
+    1. If there's nothing, we call their api with the transaction id, and we simulate as if it was a received event, but in this case their api won't be called for the information to confirm.
+
+## STATUS: WORKING Odoo 13.0
 
 ## License MIT
