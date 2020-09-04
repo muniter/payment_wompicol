@@ -53,8 +53,9 @@ class WompiColController(http.Controller):
                 raise ValidationError('Wompicol: should not receive "noconfirm" on the controller')
 
             # Process the data
-            request.env['payment.transaction'].sudo().form_feedback(post,
-                                                                    'wompicol')
+            request.env['payment.transaction'].sudo().form_feedback(
+                    post,
+                    'wompicol')
         else:
             _logger.info(
                 'Wompicol: for feedback entered with incomplete data %s',
@@ -72,10 +73,15 @@ class WompiColController(http.Controller):
         #   'id': '16056-1597266116-33603'
         # }
 
-        if not post:
-            post = {}
-
         _logger.info('Wompicol: client browser returning. %s',
                      pprint.pformat(post))
+        if post:
+            id = post.get('id')
+            env = post.get('env')
+            env = env if env == 'test' else 'prod'
+            # Process the data
+            request.env[
+                    'payment.transaction'
+                    ].sudo()._wompicol_get_data_manually(id, env)
 
         return werkzeug.utils.redirect('/payment/process')
