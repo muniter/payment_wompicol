@@ -115,18 +115,19 @@ class PaymentAcquirerWompicol(models.Model):
                 'payment.transaction'
                 ].search([('reference', '=', values.get('reference'))])
 
-        # Wompi won't allow duplicate reference code even if payment was
-        # failed last time, so replace reference code if payment is not
-        # done or pending. Or is it handled by the base class?
-        if tx.state not in ['done', 'pending']:
-            reference_code = str(uuid.uuid4())
+        if values['currency'].name != 'COP':
+            error_msg = (
+                _('WompiCol: Only accepts COP as the currency, received')
+                % (values['currency'].name))
+            raise ValidationError(error_msg)
+
         wompicol_tx_values = dict(
             values,
             publickey=self._get_keys()[1],
-            currency=values['currency'].name,  # COP, is the only one supported
+            currency='COP',
             # Wompi wants cents (*100) and has to end on 00.
             amountcents=math.ceil(values['amount']) * 100,
-            referenceCode=reference_code,
+            referenceCode=tx.reference,
             redirectUrl=urls.url_join(base_url, '/payment/wompicol/client_return'),
         )
         return wompicol_tx_values
