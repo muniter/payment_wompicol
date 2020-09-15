@@ -3,6 +3,7 @@ import uuid
 import math
 import requests
 import pprint
+import time
 
 from hashlib import md5
 from werkzeug import urls
@@ -147,14 +148,24 @@ class PaymentTransactionWompiCol(models.Model):
         updated, check manually and update the transaction"""
         # Check first if this transaciont has been updated already
         if id:
-            # If there's a transaction with that id as acquirer_reference,
-            # it has already been updated, because that value is only set
-            # once a response is received.
-            tx = self.env[
-                    'payment.transaction'
-                    ].search([('acquirer_reference', '=', id)])
-            if len(tx):
-                return
+            i = 0
+            # Test 5 times, wait 2 seconds each. The idea is to wait for
+            # the wompi event instead of trying to call their api when
+            # their event could be coming in a few seconds. Also when
+            # processing and another event comes back it will error out
+            # from something unrelated about adding to followers to the
+            # same object.
+            while i < 5:
+                # If there's a transaction with that id as acquirer_reference,
+                # it has already been updated, because that value is only set
+                # once a response is received.
+                i += 1  # Counter
+                tx = self.env[
+                        'payment.transaction'
+                        ].search([('acquirer_reference', '=', id)])
+                if len(tx):
+                    return
+                time.sleep(2)
 
         api_url = self.acquirer_id._get_wompicol_api_url(environment)
         request_url = f"{api_url}/transactions/{id}"
