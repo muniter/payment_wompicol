@@ -119,16 +119,14 @@ class PaymentAcquirerWompicol(models.Model):
         # failed last time, so replace reference code if payment is not
         # done or pending. Or is it handled by the base class?
         if tx.state not in ['done', 'pending']:
-            # Replace the reference code with a new one
-            tx.reference = str(uuid.uuid4())
-            # tx.reference = f"{reference}-{str(uuid.uuid4())}"
+            reference_code = str(uuid.uuid4())
         wompicol_tx_values = dict(
             values,
             publickey=self._get_keys()[1],
             currency=values['currency'].name,  # COP, is the only one supported
             # Wompi wants cents (*100) and has to end on 00.
             amountcents=math.ceil(values['amount']) * 100,
-            referenceCode=tx.reference,
+            referenceCode=reference_code,
             redirectUrl=urls.url_join(base_url, '/payment/wompicol/client_return'),
         )
         return wompicol_tx_values
