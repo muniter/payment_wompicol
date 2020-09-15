@@ -124,7 +124,6 @@ class PaymentAcquirerWompicol(models.Model):
             # tx.reference = f"{reference}-{str(uuid.uuid4())}"
         wompicol_tx_values = dict(
             values,
-            # wompi_url="https://checkout.wompi.co/p/",
             publickey=self._get_keys()[1],
             currency=values['currency'].name,  # COP, is the only one supported
             # Wompi wants cents (*100) and has to end on 00.
@@ -165,7 +164,7 @@ class PaymentTransactionWompiCol(models.Model):
         if wompi_data.status_code == 200:
             wompi_data = wompi_data.json()
             _logger.info("Wompicol: Sucesfully called api for id: %s it returned data: %s"
-                         % id, pprint.pformat(wompi_data))
+                         % (id, pprint.pformat(wompi_data)))
             # pprint.pformat(post))
             # Data needed to validate is just on 'data'
             # Format it how it expects it
@@ -358,6 +357,8 @@ class PaymentTransactionWompiCol(models.Model):
             _logger.info('Validated WompiCol payment for tx %s: setting as done' % (self.reference))
             res.update(state='done', date=fields.Datetime.now())
             self._set_transaction_done()
+            # Takes care of setting the order as paid right away
+            self._post_process_after_done()
             self.write(res)
             self.execute_callback()
             return True
