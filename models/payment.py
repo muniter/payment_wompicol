@@ -368,9 +368,10 @@ class PaymentTransactionWompiCol(models.Model):
             res.update(state='done', date=fields.Datetime.now())
             self._set_transaction_done()
             # Takes care of setting the order as paid right away
-            self._post_process_after_done()
             self.write(res)
             self.execute_callback()
+            if not self.is_processed:
+                self._post_process_after_done()
             return True
         elif status == 'PENDING':
             _logger.info('Received notification for WompiCol payment %s: setting as pending' % (self.reference))
