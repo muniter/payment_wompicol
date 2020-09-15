@@ -151,6 +151,12 @@ class WompicolForm(WompicolCommon):
                 tx.acquirer_reference,
                 '01-1532941443-49201',
                 'wompicol: wrong txn_id after receiving a valid event notification')
+        # TODO: Implement this test.
+        # Check the order was set as a sale order once the transaction was approved
+        # self.assertEqual(
+        #         tx.state,
+        #         'done',
+        #         'wompicol: wrong state after receiving a valid approved notification')
 
         # update transaction
         tx.write({
