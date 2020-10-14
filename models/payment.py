@@ -171,8 +171,9 @@ class PaymentTransactionWompiCol(models.Model):
             # Format it how it expects it
             wompi_data["data"] = {"transaction": wompi_data["data"]}
             # Fix the reference code, only what's previous to _ is what we want
-            if '_' in wompi_data['data']['transaction']['reference']:
-                wompi_data['reference'] = wompi_data['reference'].split('_')[0]
+            ref = wompi_data['data']['transaction']['reference']
+            if '_' in ref:
+                wompi_data['data']['transaction']['reference'] = ref.split('_')[0]
             # This avoid confirming the event, since the data is being
             # asked from the server. Instead of listening.
             wompi_data["noconfirm"] = True
