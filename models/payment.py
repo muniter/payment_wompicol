@@ -236,10 +236,13 @@ class PaymentTransactionWompiCol(models.Model):
         if wompi_data.status_code == 200:
             # Data needed to validate is just on 'data'
             wompi_data = wompi_data.json().get('data')
+            # Fix the reference code, only what's previous to _ is what we want
+            if '_' in wompi_data['reference']:
+                wompi_data['reference'] = wompi_data['reference'].split('_')[0]
             # Basically compare between event received and what wompi api says
             # if a value doesnt match add tuple (name, value)
             invalid = [(val, tx_data.get(val)) for val in to_check
-                       if tx_data.get('val') != wompi_data.get('val')]
+                       if tx_data.get(val) != wompi_data.get(val)]
 
             if any(invalid):
                 error_msg = (_('WompiCol: validation of data received vs reported by wompi api failed for parameters %s') % (invalid))
