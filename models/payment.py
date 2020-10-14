@@ -166,13 +166,13 @@ class PaymentTransactionWompiCol(models.Model):
             wompi_data = wompi_data.json()
             _logger.info("Wompicol: Sucesfully called api for id: %s it returned data: %s"
                          % (id, pprint.pformat(wompi_data)))
-            # Fix the reference code, only what's previous to _ is what we want
-            if '_' in wompi_data['reference']:
-                wompi_data['reference'] = wompi_data['reference'].split('_')[0]
             # pprint.pformat(post))
             # Data needed to validate is just on 'data'
             # Format it how it expects it
             wompi_data["data"] = {"transaction": wompi_data["data"]}
+            # Fix the reference code, only what's previous to _ is what we want
+            if '_' in wompi_data['reference']:
+                wompi_data['reference'] = wompi_data['reference'].split('_')[0]
             # This avoid confirming the event, since the data is being
             # asked from the server. Instead of listening.
             wompi_data["noconfirm"] = True
