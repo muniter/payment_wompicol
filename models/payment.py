@@ -4,6 +4,7 @@ import math
 import requests
 import pprint
 import time
+import random
 
 from hashlib import md5
 from werkzeug import urls
@@ -122,13 +123,15 @@ class PaymentAcquirerWompicol(models.Model):
                 % (values['currency'].name))
             raise ValidationError(error_msg)
 
+        wompiref = f"{tx.reference}_{int(random.random() * 1000)}"
+
         wompicol_tx_values = dict(
             values,
             publickey=self._get_keys()[1],
             currency='COP',
             # Wompi wants cents (*100) and has to end on 00.
             amountcents=math.ceil(values['amount']) * 100,
-            referenceCode=tx.reference,
+            referenceCode=wompiref,
             redirectUrl=urls.url_join(base_url, '/payment/wompicol/client_return'),
         )
         return wompicol_tx_values
