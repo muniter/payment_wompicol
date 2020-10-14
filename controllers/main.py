@@ -44,14 +44,14 @@ class WompiColController(http.Controller):
             if 'wompicol_test' in request.httprequest.path:
                 post["test"] = 1
 
-            ref = post.get('data', {}).get('transaction', {}).get('reference', {})
-            if '_' in ref:
-                post['data']['transaction']['reference'] = ref.split('_')[0]
-
             # Log the event data
             _logger.info(
                 'Wompicol: entering form_feedback with post response data %s',
                 pprint.pformat(post))
+
+            ref = post.get('data', {}).get('transaction', {}).get('reference', {})
+            if '_' in ref:
+                post['data']['transaction']['reference'] = ref.split('_')[0]
 
             if post.get('noconfirm'):
                 raise ValidationError('Wompicol: should not receive "noconfirm" on the controller')
